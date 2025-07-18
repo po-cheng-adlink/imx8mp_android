@@ -1,0 +1,39 @@
+From 94e70b5010fcdc1e84e444bb2a2b6c0d85057423 Mon Sep 17 00:00:00 2001
+From: "po.cheng" <po.cheng@adlinktech.com>
+Date: Fri, 18 Jul 2025 03:38:12 +0000
+Subject: [PATCH] sp2-imx8mp: script: imx-sdcard-partition: modify script to
+ flash partitions on loop device
+
+Signed-off-by: po.cheng <po.cheng@adlinktech.com>
+---
+ common/tools/imx-sdcard-partition.sh | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/common/tools/imx-sdcard-partition.sh b/common/tools/imx-sdcard-partition.sh
+index 9d38b649..f2b71fb0 100755
+--- a/common/tools/imx-sdcard-partition.sh
++++ b/common/tools/imx-sdcard-partition.sh
+@@ -195,8 +195,9 @@ function get_current_device_base_name
+     if [ -z ${current_device_base_name} ]; then
+         #get the minor number of the node
+         node_device_major=`ls -l ${node} | awk '{print $5}'`
+-        node_device_minor=`ls -l ${node} | awk '{print $6}'`
+-        all_device_info=`ls -l ${node}*`
++        node_device_minor=`if [ "${node_device_major}" = "7," ]; then ls -l ${node}p1 | awk '{--$6; print $6}'; else ls -l ${node} | awk '{print $6}'; fi`
++        echo "$node_device_minor"
++        all_device_info=`if [ "${node_device_major}" = "7," ]; then ls -l ${node}p*; else ls -l ${node}*; fi`
+ 
+         # use '\n' as delimiter
+         OLDIFS=$IFS
+@@ -206,7 +207,7 @@ function get_current_device_base_name
+             current_device_major=`echo ${current_device_info} | awk '{print $5}'`
+             current_device_minor=`echo ${current_device_info} | awk '{print $6}'`
+             minor_difference=$[$current_device_minor - $node_device_minor]
+-            if [ ${node_device_major} = ${current_device_major} ]; then
++            if [ ${node_device_major} = ${current_device_major} -o ${current_device_major} = "259," ]; then
+                 if [ 1 -eq $minor_difference ]; then
+                     current_device_base_name=`echo ${current_device_info} | awk '{print $10}'`
+                     current_device_base_name=${current_device_base_name%1}
+-- 
+2.25.1
+
